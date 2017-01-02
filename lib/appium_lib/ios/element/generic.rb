@@ -63,7 +63,7 @@ module Appium
       return [] if elements.empty?
       elements.select do |element|
         name = element.name
-        name.nil? ? false : name.downcase == value.downcase
+        name.nil? ? false : name.casecmp(value).zero?
       end
     end
   end # module Ios
