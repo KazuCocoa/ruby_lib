@@ -1,13 +1,23 @@
+language: objective-c
 sudo: false
+osx_image: xcode8.2
+
 cache: bundler
-language: ruby
+
 rvm:
-  - 2.2.2
-before_install: gem update --remote bundler
+  - 2.2.5
+
 install:
-  - bundle install --retry=3
+  - bundle install
+  - npm install -g appium@1.6.3
+
+before_script:
+  - appium --log-level warn &
+
 script:
   - bundle exec rake rubocop
+  - cd ios_tests; rake ios
+
 notifications:
   email:
     on_success: never
