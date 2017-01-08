@@ -20,7 +20,7 @@ describe 'driver' do
     t 'default_wait attr' do
       set_wait 1
       default_wait.must_equal 1
-      set_wait 30 # restore default
+      set_wait # restore default
     end
 
     t 'app_path attr' do
