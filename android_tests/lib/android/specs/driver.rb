@@ -30,7 +30,6 @@ describe 'driver' do
 
     # Only used for Sauce Labs
     t 'verify all attributes' do
-      2.times { set_wait 1 } # must set twice to validate last_waits
       actual                = driver_attributes
       caps_app_for_teardown = actual[:caps][:app]
       actual[:caps][:app]   = File.basename actual[:caps][:app]

@@ -32,7 +32,6 @@ describe 'driver' do
 
   describe 'Appium::Driver attributes' do
     t 'verify all attributes' do
-      2.times { set_wait 30 } # must set twice to validate last_waits
       actual                = driver_attributes
       caps_app_for_teardown = actual[:caps][:app]
       actual[:caps][:app]   = File.basename actual[:caps][:app]
@@ -89,14 +88,12 @@ describe 'driver' do
 
     t 'no_wait' do
       no_wait
-      default_wait.must_equal 0
-      set_wait 30
+      current_timeout.must_equal 0
+      set_wait
     end
 
     t 'default_wait attr' do
-      set_wait 31 # set wait and no_wait update default_wait
-      default_wait.must_equal 31
-      set_wait 30
+      default_wait.must_equal 30
     end
 
     t 'app_path attr' do

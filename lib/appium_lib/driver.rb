@@ -586,6 +586,10 @@ module Appium
       @driver.manage.timeouts.implicit_wait = 0
     end
 
+    def current_timeout
+      @driver.manage.timeouts
+    end
+
     # Set implicit wait. Default to @default_wait.
     #
     # ```ruby`
