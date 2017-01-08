@@ -88,7 +88,7 @@ describe 'driver' do
 
     t 'no_wait' do
       no_wait
-      current_timeout.must_equal 0
+      proc { screen }.must_raise Selenium::WebDriver::Error::NoSuchElementError
       set_wait
     end
 
