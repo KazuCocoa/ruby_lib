@@ -344,10 +344,6 @@ module Appium
       @sauce_access_key = nil if !@sauce_access_key || (@sauce_access_key.is_a?(String) && @sauce_access_key.empty?)
       @appium_port      = appium_lib_opts.fetch :port, 4723
 
-
-      require "pry"
-      binding.pry
-
       # to pass it in Selenium.new.
       # `listener = opts.delete(:listener)` is called in Selenium::Driver.new
       @listener = appium_lib_opts.fetch :listener, nil
