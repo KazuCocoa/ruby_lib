@@ -52,6 +52,9 @@ describe 'driver' do
                               debug:            true,
                               listener:         nil }
 
+      require "pry"
+      binding.pry
+
       if actual != expected
         diff    = HashDiff.diff expected, actual
         diff    = "diff (expected, actual):\n#{diff}"

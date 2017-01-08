@@ -280,7 +280,7 @@ module Appium
     # Returns the default client side wait.
     # This value is independent of what the server is using
     # @return [Integer]
-    attr_accessor :default_wait
+    attr_reader :default_wait
     # Username for use on Sauce Labs
     attr_accessor :sauce_username
     # Access Key for use on Sauce Labs
@@ -343,6 +343,10 @@ module Appium
       @sauce_access_key = appium_lib_opts.fetch :sauce_access_key, ENV['SAUCE_ACCESS_KEY']
       @sauce_access_key = nil if !@sauce_access_key || (@sauce_access_key.is_a?(String) && @sauce_access_key.empty?)
       @appium_port      = appium_lib_opts.fetch :port, 4723
+
+
+      require "pry"
+      binding.pry
 
       # to pass it in Selenium.new.
       # `listener = opts.delete(:listener)` is called in Selenium::Driver.new
