@@ -88,7 +88,7 @@ describe 'driver' do
 
     t 'no_wait' do
       no_wait
-      proc { screen }.must_raise Selenium::WebDriver::Error::NoSuchElementError
+      proc { find_element(:accessibility_id, 'zz') }.must_raise Selenium::WebDriver::Error::NoSuchElementError
       set_wait
     end
 
