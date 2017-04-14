@@ -108,11 +108,6 @@ describe 'driver' do
         raise message
       end
     end
-
-    t 'default timeout for http client' do
-      http_client.open_timeout.must_equal 999_999
-      http_client.read_timeout.must_equal 999_999
-    end
   end
 
   describe 'Appium::Driver' do

@@ -599,12 +599,13 @@ module Appium
     # @return [Selenium::WebDriver] the new global driver
     def start_driver
       # open_timeout and read_timeout are explicit wait.
-      @http_client ||= Selenium::WebDriver::Remote::Http::Default.new(open_timeout: 999_999, read_timeout: 999_999)
+      @client ||= Selenium::WebDriver::Remote::Http::Default.new
+      @client.timeout = 999_999
 
       begin
         driver_quit
         @driver =  Selenium::WebDriver.for(:remote,
-                                           http_client: @http_client,
+                                           http_client: @client,
                                            desired_capabilities: @caps,
                                            url: server_url,
                                            listener: @listener)
