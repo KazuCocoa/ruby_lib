@@ -63,6 +63,10 @@ describe 'android/helper' do
   t 'find by id' do
     wait { find('accessibility').click }
     wait { find('accessibility node provider').click }
+
+    require 'pry'
+    binding.pry
+
     wait { id 'accessibility_node_provider' } # Accessibility/Accessibility Node Provider
     2.times { back }
   end

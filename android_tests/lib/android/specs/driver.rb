@@ -63,7 +63,7 @@ describe 'driver' do
       caps_app_for_teardown = actual[:caps][:app]
       expected_app = File.absolute_path('api.apk')
 
-      expected            = { automation_name:   nil,
+      expected            = { automation_name:   "uiautomator2",
                               custom_url:       false,
                               export_session:   false,
                               default_wait:     1,
