@@ -6,28 +6,25 @@ module Appium
 
     private
 
-    # @private
     def _button_visible_selectors(opts = {})
       button_index       = opts.fetch :button_index, false
       image_button_index = opts.fetch :image_button_index, false
 
       if button_index && image_button_index
         "new UiSelector().className(#{Button}).instance(#{button_index});" \
-          "new UiSelector().className(#{ImageButton}).instance(#{image_button_index});"
+        "new UiSelector().className(#{ImageButton}).instance(#{image_button_index});"
       else
         "new UiSelector().className(#{Button});" \
-          "new UiSelector().className(#{ImageButton});"
+        "new UiSelector().className(#{ImageButton});"
       end
     end
 
-    # @private
     def _button_exact_string(value)
       button       = string_visible_exact Button, value
       image_button = string_visible_exact ImageButton, value
       button + image_button
     end
 
-    # @private
     def _button_contains_string(value)
       button       = string_visible_contains Button, value
       image_button = string_visible_contains ImageButton, value
@@ -47,10 +44,21 @@ module Appium
         index = value
         raise "#{index} is not a valid index. Must be >= 1" if index <= 0
 
-        return find_element :uiautomator, _button_visible_selectors(index: index)
+        unless automation_name_is_uiautomator2?
+          return find_element :uiautomator, _button_visible_selectors(index: index)
+        end
+
+        result = find_elements :uiautomator, _button_visible_selectors(index: index)
+        raise _no_such_element if result.empty?
+        return result[value - 1]
       end
 
-      find_element :uiautomator, _button_contains_string(value)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator, _button_contains_string(value)
+        raise_no_such_element_if_empty(elements)
+      else
+        find_element :uiautomator, _button_contains_string(value)
+      end
     end
 
     # Find all buttons containing value.
@@ -65,7 +73,12 @@ module Appium
     # Find the first button.
     # @return [Button]
     def first_button
-      find_element :uiautomator, _button_visible_selectors(button_index: 0, image_button_index: 0)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator, _button_visible_selectors(button_index: 0, image_button_index: 0)
+        raise_no_such_element_if_empty(elements)
+      else
+        find_element :uiautomator, _button_visible_selectors(button_index: 0, image_button_index: 0)
+      end
     end
 
     # Find the last button.
@@ -78,16 +91,28 @@ module Appium
       image_button_index = tags(ImageButton).length
       image_button_index -= 1 if image_button_index > 0
 
-      find_element :uiautomator,
-                   _button_visible_selectors(button_index: button_index,
-                                             image_button_index: image_button_index)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator,
+                                 _button_visible_selectors(button_index: button_index,
+                                                           image_button_index: image_button_index)
+        raise_no_such_element_if_empty(elements)
+      else
+        find_element :uiautomator,
+                     _button_visible_selectors(button_index: button_index,
+                                               image_button_index: image_button_index)
+      end
     end
 
     # Find the first button that exactly matches value.
     # @param value [String] the value to match exactly
     # @return [Button]
     def button_exact(value)
-      find_element :uiautomator, _button_exact_string(value)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator, _button_exact_string(value)
+        raise_no_such_element_if_empty(elements)
+      else
+        find_element :uiautomator, _button_exact_string(value)
+      end
     end
 
     # Find all buttons that exactly match value.
@@ -95,6 +120,13 @@ module Appium
     # @return [Array<Button>]
     def buttons_exact(value)
       find_elements :uiautomator, _button_exact_string(value)
+    end
+
+    private
+
+    def raise_no_such_element_if_empty(elements)
+      raise _no_such_element if elements.empty?
+      elements.first
     end
   end # module Android
 end # module Appium

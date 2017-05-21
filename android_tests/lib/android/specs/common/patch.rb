@@ -43,14 +43,21 @@ describe 'common/patch' do
         set_wait 30
       end
       value = value.split("\n").first.strip
-      exp   = 'No element found'
+      exp   = 'An element could not be located on the page using the given search parameters.'
       value.must_equal exp
     end
 
     t 'id success' do
-      wait do
-        el = id 'autocomplete_3_button_7' # <string name="autocomplete_3_button_7">Text</string>
-        el.name.must_equal 'Text'
+      if !automation_name_is_uiautomator2?
+        wait do
+          el = id 'autocomplete_3_button_7' # <string name="autocomplete_3_button_7">Text</string>
+          el.name.must_equal 'Text'
+        end
+      else
+        wait do
+          el = text 'text' # <string name="autocomplete_3_button_7">Text</string>
+          el.name.must_equal 'Text'
+        end
       end
     end
 

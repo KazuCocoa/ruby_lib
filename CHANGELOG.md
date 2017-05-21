@@ -3,6 +3,65 @@ Commit based release not is [release_notes.md](./release_notes.md)
 
 Release tags are https://github.com/appium/ruby_lib/releases .
 
+## v9.4.4
+### 1. Enhancements
+- add mobile gesture, `mobile: alert`
+    - Required over https://github.com/appium/appium-xcuitest-driver/releases/tag/v2.28.6
+- add travis example for ios [#573](https://github.com/appium/ruby_lib/pull/573)
+- remove some redundant code [#572](https://github.com/appium/ruby_lib/pull/572), [#571](https://github.com/appium/ruby_lib/pull/571)
+- update api-demos [#569](https://github.com/appium/ruby_lib/issues/569)
+
+### 2. Bug fixes
+
+### 3. Deprecations
+
+## v9.4.3
+### 1. Enhancements
+- Use uiautomator for uiautomator2 [#561](https://github.com/appium/ruby_lib/pull/561)
+    - improve stability for some methods
+- don't use selenium-webdriver 3.5+ [#559](https://github.com/appium/ruby_lib/pull/559)
+- Auto link bug # from release notes [#239](https://github.com/appium/ruby_lib/issues/239)
+
+### 2. Bug fixes
+
+### 3. Deprecations
+
+### Special Thanks
+- Thanks for checking uiautomator2
+    - [@Edouard-chin](https://github.com/Edouard-chin), [@rajdeepv](https://github.com/rajdeepv)
+
+## v9.4.2
+### 1. Enhancements
+
+### 2. Bug fixes
+- fix drag_from_to_for_duration gets server error [#552](https://github.com/appium/ruby_lib/issues/552)
+
+### 3. Deprecations
+
+## v9.4.1
+### 1. Enhancements
+
+### 2. Bug fixes
+- fix 9.4.0 release sudden failures [#546](https://github.com/appium/ruby_lib/issues/546)
+    - XPath strategy for find_element/s sudden fail than uiautomator strategy.
+    - Use `:xpath` strategy only for uiautomator2
+
+### 3. Deprecations
+
+## v9.4.0
+### 1. Enhancements
+- update mobile gesture APIs for XCUITest(WDA) [#514](https://github.com/appium/ruby_lib/pull/514)
+    - For XCUITest(WebDriverAgent)
+    - Users can call some [`mobile:` methods](https://github.com/appium/appium/blob/master/docs/en/writing-running-appium/ios-xctest-mobile-gestures.md) without `execute_script('mobile: tap', args)`.
+    - Users can write test code without `.ref` method for elements in `execute_script`.
+    - Example: https://github.com/appium/ruby_lib/pull/537
+- Support UIAutomator2 strategy for Android[#505](https://github.com/appium/ruby_lib/issues/505)
+    - Fix some find elemenet methods[#544](https://github.com/appium/ruby_lib/pull/544)
+
+### 2. Bug fixes
+
+### 3. Deprecations
+
 ## v9.3.8
 ### 1. Enhancements
 - allow using TestObject server [#538](https://github.com/appium/ruby_lib/pull/538)

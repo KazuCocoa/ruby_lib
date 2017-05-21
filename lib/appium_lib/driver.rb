@@ -24,6 +24,7 @@ require_relative 'ios/element/generic'
 require_relative 'ios/element/textfield'
 require_relative 'ios/element/text'
 require_relative 'ios/mobile_methods'
+require_relative 'ios/xcuitest_gestures'
 
 # android
 require_relative 'android/helper'
@@ -275,35 +276,35 @@ module Appium
     # The amount to sleep in seconds before every webdriver http call.
     attr_accessor :global_webdriver_http_sleep
     # Selenium webdriver capabilities
-    attr_accessor :caps
+    attr_reader :caps
     # Custom URL for the selenium server
-    attr_accessor :custom_url
+    attr_reader :custom_url
     # Export session id to textfile in /tmp for 3rd party tools
-    attr_accessor :export_session
+    attr_reader :export_session
     # Default wait time for elements to appear
     # Returns the default client side wait.
     # This value is independent of what the server is using
     # @return [Integer]
     attr_reader :default_wait
     # Username for use on Sauce Labs. Set `false` to disable Sauce, even when SAUCE_USERNAME is in ENV.
-    attr_accessor :sauce_username
+    attr_reader :sauce_username
     # Access Key for use on Sauce Labs. Set `false` to disable Sauce, even when SAUCE_ACCESS_KEY is in ENV.
-    attr_accessor :sauce_access_key
+    attr_reader :sauce_access_key
     # Override the Sauce Appium endpoint to allow e.g. TestObject tests
-    attr_accessor :sauce_endpoint
+    attr_reader :sauce_endpoint
     # Appium's server port
-    attr_accessor :appium_port
+    attr_reader :appium_port
     # Device type to request from the appium server
-    attr_accessor :appium_device
+    attr_reader :appium_device
     # Automation name sent to appium server or received from server
     # If automation_name is nil, it is not set both client side and server side.
     attr_reader :automation_name
     # Appium's server version
     attr_reader :appium_server_status
     # Boolean debug mode for the Appium Ruby bindings
-    attr_accessor :appium_debug
+    attr_reader :appium_debug
     # instance of AbstractEventListener for logging support
-    attr_accessor :listener
+    attr_reader :listener
     # Returns the driver
     # @return [Driver] the driver
     attr_reader :driver
@@ -405,12 +406,12 @@ module Appium
       # load common methods
       extend Appium::Common
       extend Appium::Device
+
       if device_is_android?
-        # load Android specific methods
         extend Appium::Android
       else
-        # load iOS specific methods
         extend Appium::Ios
+        extend Appium::Ios::XcuitestGesture if automation_name_is_xcuitest? # Override touch actions
       end
 
       # apply os specific patches
@@ -470,6 +471,12 @@ module Appium
     # @return [Boolean]
     def automation_name_is_xcuitest?
       !@automation_name.nil? && 'xcuitest'.casecmp(@automation_name).zero?
+    end
+
+    # Return true if automationName is 'uiautomator2'
+    # @return [Boolean]
+    def automation_name_is_uiautomator2?
+      !@automation_name.nil? && 'uiautomator2'.casecmp(@automation_name).zero?
     end
 
     # Return true if the target Appium server is over REQUIRED_VERSION_XCUITEST.
@@ -769,5 +776,8 @@ end # module Appium
 
 # Paging in Pry is annoying :q required to exit.
 # With pager disabled, the output is similar to IRB
-# Only set if Pry is defined.
-Pry.config.pager = false if defined?(Pry)
+# Only set if Pry is defined and there is no `.pryrc` files.
+if defined?(Pry) && !(File.exist?(Pry::HOME_RC_FILE) || File.exist?(Pry::LOCAL_RC_FILE))
+  Appium::Logger.debug 'Pry.config.pager = false is set.'
+  Pry.config.pager = false
+end

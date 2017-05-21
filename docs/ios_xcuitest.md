@@ -79,5 +79,32 @@ finds_exact(value) # Return any elements include `value` as its name attributes.
 xpaths("//some xpaths")
 ```
 
+## Gesture
+- `mobile:` commands are provided by WDA.
+- Documentations
+    - https://github.com/appium/appium/blob/master/docs/en/writing-running-appium/ios-xctest-mobile-gestures.md
+- Specs by test code
+    - https://github.com/appium/appium-xcuitest-driver/blob/master/test/functional/basic/gesture-e2e-specs.js
+
+### Workaround
+- `mobile:` commands depends on WDA and Apple's framework and the behaviour depends on them.
+- Sometimes issues occur such as "doubleTap isn't tapping #548"
+    - workaround for it:
+        - with `selenium-webdriver >= 3.4.0`
+            ```ruby
+            def double_tap(element)
+              rect = element.rect
+              execute_script 'mobile: doubleTap', x: rect.x + rect.width / 2, y: rect.y + rect.height / 2
+            end
+            ```        
+        - with `selenium-webdriver < 3.4.0`
+            ```ruby
+              def double_tap(element)
+                size = element.size
+                location = element.location
+                execute_script 'mobile: doubleTap', x: location.x + size.width / 2, y: location.y + size.height / 2
+              end
+            ```
+
 ## Other actions
 Basically, other actions such as `type` are compatible with `automationName = Appium`.

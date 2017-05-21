@@ -3,7 +3,7 @@ module Appium
     # @private
     # http://nokogiri.org/Nokogiri/XML/SAX.html
     class AndroidElements < Nokogiri::XML::SAX::Document
-      attr_reader :result, :keys, :instance, :filter
+      attr_reader :result, :keys, :filter
 
       # convert to string to support symbols
       def filter=(value)
@@ -15,21 +15,16 @@ module Appium
       def initialize
         reset
         @filter   = false
-        @instance = Hash.new(-1)
       end
 
       def reset
         @result   = ''
         @keys     = %w(text resource-id content-desc)
-        @instance = Hash.new(-1)
       end
 
       # http://nokogiri.org/Nokogiri/XML/SAX/Document.html
       def start_element(name, attrs = [])
         return if filter && !name.downcase.include?(filter)
-
-        # instance numbers start at 0.
-        number = instance[name] += 1
 
         attributes = {}
 
@@ -78,38 +73,9 @@ module Appium
         string += "  id: #{id}\n" unless id.nil?
         string += "  strings.xml: #{string_ids}" unless string_ids.nil?
 
-        @result += "\n#{name} (#{number})\n#{string}" unless attributes.empty?
+        @result += "\n#{name}\n#{string}" unless attributes.empty?
       end
     end # class AndroidElements
-
-    # Fix uiautomator's xml dump.
-    # https://github.com/appium/appium/issues/2822
-    # https://code.google.com/p/android/issues/detail?id=74143
-    def _fix_android_native_source(source)
-      # <android.app.ActionBar$Tab
-      # <android.app.ActionBar  $  Tab
-
-      # find each closing tag that contains a dollar sign.
-      source.scan(/<\/([^>]*\$[^>]*)>/).flatten.uniq.each do |problem_tag|
-        # "android.app.ActionBar$Tab"
-        before, after = problem_tag.split('$')
-        before.strip!
-        after.strip!
-
-        fixed = "#{before}.#{after}"
-
-        # now escape . in before/after because they're used in regex
-        before.gsub!('.', '\.')
-        after.gsub!('.', '\.')
-
-        #  <android.app.ActionBar$Tab   => <android.app.ActionBar.Tab
-        # </android.app.ActionBar$Tab> => </android.app.ActionBar.Tab>
-        source = source.gsub(/<#{before}\s*\$\s*#{after}/,
-                             "<#{fixed}").gsub(/<\/#{before}\s*\$\s*#{after}>/, "</#{fixed}>")
-      end
-
-      source
-    end
 
     # Prints xml of the current page
     # @return [void]
@@ -279,42 +245,83 @@ module Appium
     end
 
     # Returns a string that matches the first element that contains value
+    # For automationName is uiautomator2
+    # example: string_visible_contains_xpath 'UIATextField', 'sign in'
+    # note for XPath: https://github.com/appium/ruby_lib/pull/561
     #
-    # example: complex_find_contains 'UIATextField', 'sign in'
+    # @param class_name [String] the class name for the element
+    # @param value [String] the value to search for
+    # @return [String]
+    def string_visible_contains_xpath(class_name, value)
+      r_id = resource_id(value, " or @resource-id='#{value}'")
+
+      if class_name == '*'
+        return "//*[contains(translate(@text,'#{value.upcase}', '#{value}'), '#{value}')" \
+            " or contains(translate(@content-desc,'#{value.upcase}', '#{value}'), '#{value}')" + r_id + ']'
+      end
+
+      "//#{class_name}[contains(translate(@text,'#{value.upcase}', '#{value}'), '#{value}')" \
+        " or contains(translate(@content-desc,'#{value.upcase}', '#{value}'), '#{value}')" + r_id + ']'
+    end
+
+    # Returns a string that matches the first element that contains value
+    # For automationName is Appium
+    # example: string_visible_contains 'UIATextField', 'sign in'
+    # note for XPath: https://github.com/appium/ruby_lib/pull/561
     #
     # @param class_name [String] the class name for the element
     # @param value [String] the value to search for
     # @return [String]
     def string_visible_contains(class_name, value)
       value = %("#{value}")
-
       if class_name == '*'
         return (resource_id(value, "new UiSelector().resourceId(#{value});") +
-          "new UiSelector().descriptionContains(#{value});" \
-          "new UiSelector().textContains(#{value});")
+            "new UiSelector().descriptionContains(#{value});" \
+            "new UiSelector().textContains(#{value});")
       end
 
       class_name = %("#{class_name}")
-
       resource_id(value, "new UiSelector().className(#{class_name}).resourceId(#{value});") +
-        "new UiSelector().className(#{class_name}).descriptionContains(#{value});" \
-        "new UiSelector().className(#{class_name}).textContains(#{value});"
+          "new UiSelector().className(#{class_name}).descriptionContains(#{value});" \
+          "new UiSelector().className(#{class_name}).textContains(#{value});"
     end
 
     # Find the first element that contains value
-    # @param element [String] the class name for the element
+    # @param class_name [String] the class name for the element
     # @param value [String] the value to search for
     # @return [Element]
-    def complex_find_contains(element, value)
-      find_element :uiautomator, string_visible_contains(element, value)
+    def complex_find_contains(class_name, value)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator, string_visible_contains(class_name, value)
+        raise _no_such_element if elements.empty?
+        elements.first
+      else
+        find_element :uiautomator, string_visible_contains(class_name, value)
+      end
     end
 
     # Find all elements containing value
-    # @param element [String] the class name for the element
+    # @param class_name [String] the class name for the element
     # @param value [String] the value to search for
     # @return [Array<Element>]
-    def complex_finds_contains(element, value)
-      find_elements :uiautomator, string_visible_contains(element, value)
+    def complex_finds_contains(class_name, value)
+      find_elements :uiautomator, string_visible_contains(class_name, value)
+    end
+
+    # @private
+    # Create an string to exactly match the first element with target value
+    # For automationName is uiautomator2
+    # @param class_name [String] the class name for the element
+    # @param value [String] the value to search for
+    # @return [String]
+    def string_visible_exact_xpath(class_name, value)
+      r_id = resource_id(value, " or @resource-id='#{value}'")
+
+      if class_name == '*'
+        return "//*[@text='#{value}' or @content-desc='#{value}'" + r_id + ']'
+      end
+
+      "//#{class_name}[@text='#{value}' or @content-desc='#{value}'" + r_id + ']'
     end
 
     # @private
@@ -327,15 +334,14 @@ module Appium
 
       if class_name == '*'
         return (resource_id(value, "new UiSelector().resourceId(#{value});") +
-          "new UiSelector().description(#{value});" \
-          "new UiSelector().text(#{value});")
+            "new UiSelector().description(#{value});" \
+            "new UiSelector().text(#{value});")
       end
 
       class_name = %("#{class_name}")
-
       resource_id(value, "new UiSelector().className(#{class_name}).resourceId(#{value});") +
-        "new UiSelector().className(#{class_name}).description(#{value});" \
-        "new UiSelector().className(#{class_name}).text(#{value});"
+          "new UiSelector().className(#{class_name}).description(#{value});" \
+          "new UiSelector().className(#{class_name}).text(#{value});"
     end
 
     # Find the first element exactly matching value
@@ -343,7 +349,13 @@ module Appium
     # @param value [String] the value to search for
     # @return [Element]
     def complex_find_exact(class_name, value)
-      find_element :uiautomator, string_visible_exact(class_name, value)
+      if automation_name_is_uiautomator2?
+        elements = find_elements :uiautomator, string_visible_exact(class_name, value)
+        raise _no_such_element if elements.empty?
+        elements.first
+      else
+        find_element :uiautomator, string_visible_exact(class_name, value)
+      end
     end
 
     # Find all elements exactly matching value
@@ -354,14 +366,10 @@ module Appium
       find_elements :uiautomator, string_visible_exact(class_name, value)
     end
 
-    # Returns XML string for the current page
-    # Fixes uiautomator's $ in node names.
-    # `android.app.ActionBar$Tab` becomes `android.app.ActionBar.Tab`
+    # Returns XML string for the current page via `page_source`
     # @return [String]
     def get_source
-      src = @driver.page_source
-      src = _fix_android_native_source src unless src && src.start_with?('<html>')
-      src
+      @driver.page_source
     end
   end # module Android
 end # module Appium
