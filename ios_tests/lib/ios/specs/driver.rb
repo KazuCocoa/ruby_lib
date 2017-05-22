@@ -56,14 +56,22 @@ describe 'driver' do
 
   describe 'Appium::Driver attributes' do
     t 'verify all attributes' do
+      2.times { set_wait 30 } # must set twice to validate last_waits
       actual                = driver_attributes
       caps_app_for_teardown = actual[:caps][:app]
-      expected_app = File.absolute_path('UICatalog.app')
+      actual[:caps][:app]   = File.basename actual[:caps][:app]
 
-      expected            = { automation_name:  'XCUITest',
+      expected_caps       = ::Appium::Driver::Capabilities.init_caps_for_appium(platformName:    'ios',
+                                                                                platformVersion: '10.1',
+                                                                                automationName:  'XCUITest',
+                                                                                deviceName:      'iPhone Simulator',
+                                                                                app:             'UICatalog.app')
+      expected            = { caps:             expected_caps,
+                              automation_name:  'XCUITest',
                               custom_url:       false,
                               export_session:   false,
                               default_wait:     30,
+                              last_waits:       [30, 30],
                               sauce_username:   nil,
                               sauce_access_key: nil,
                               sauce_endpoint:   'ondemand.saucelabs.com:443/wd/hub',
@@ -129,12 +137,14 @@ describe 'driver' do
 
     t 'no_wait' do
       no_wait
-      proc { find_element(:accessibility_id, 'zz') }.must_raise Selenium::WebDriver::Error::NoSuchElementError
-      set_wait
+      default_wait.must_equal 0
+      set_wait 30
     end
 
     t 'default_wait attr' do
-      default_wait.must_equal 30
+      set_wait 31 # set wait and no_wait update default_wait
+      default_wait.must_equal 31
+      set_wait 30
     end
 
     t 'app_path attr' do
@@ -256,11 +266,11 @@ describe 'driver' do
       set_wait(2).must_equal(2)
       set_wait.must_equal(30)
       set_wait(3).must_equal(3)
-      set_wait.must_equal(30)
+      set_wait.must_equal(2)
 
       set_wait(2).must_equal(2)
       set_wait(3).must_equal(3)
-      set_wait.must_equal(30)
+      set_wait.must_equal(2)
     end
 
     t 'default_wait' do

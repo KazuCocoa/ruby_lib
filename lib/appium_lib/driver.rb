@@ -285,7 +285,9 @@ module Appium
     # Returns the default client side wait.
     # This value is independent of what the server is using
     # @return [Integer]
-    attr_reader :default_wait
+    attr_accessor :default_wait
+    # Array of previous wait time values
+    attr_accessor :last_waits
     # Username for use on Sauce Labs. Set `false` to disable Sauce, even when SAUCE_USERNAME is in ENV.
     attr_reader :sauce_username
     # Access Key for use on Sauce Labs. Set `false` to disable Sauce, even when SAUCE_ACCESS_KEY is in ENV.
@@ -375,6 +377,7 @@ module Appium
       @custom_url       = appium_lib_opts.fetch :server_url, false
       @export_session   = appium_lib_opts.fetch :export_session, false
       @default_wait     = appium_lib_opts.fetch :wait, 0
+      @last_waits       = [@default_wait]
       @sauce_username   = appium_lib_opts.fetch :sauce_username, ENV['SAUCE_USERNAME']
       @sauce_username   = nil if !@sauce_username || (@sauce_username.is_a?(String) && @sauce_username.empty?)
       @sauce_access_key = appium_lib_opts.fetch :sauce_access_key, ENV['SAUCE_ACCESS_KEY']
@@ -445,6 +448,7 @@ module Appium
           custom_url:       @custom_url,
           export_session:   @export_session,
           default_wait:     @default_wait,
+          last_waits:       @last_waits,
           sauce_username:   @sauce_username,
           sauce_access_key: @sauce_access_key,
           sauce_endpoint:   @sauce_endpoint,
@@ -605,7 +609,9 @@ module Appium
     #
     # @return [Selenium::WebDriver] the new global driver
     def start_driver
-      # open_timeout and read_timeout are explicit wait.
+      require 'pry'
+      binding.pry
+
       @http_client ||= Selenium::WebDriver::Remote::Http::Default.new(open_timeout: 999_999, read_timeout: 999_999)
 
       begin
@@ -641,23 +647,38 @@ module Appium
       @driver
     end
 
-    # Set implicit wait to zero.
+    # Set implicit wait and default_wait to zero.
     def no_wait
+      @last_waits                           = [@default_wait, 0]
+      @default_wait                         = 0
       @driver.manage.timeouts.implicit_wait = 0
     end
 
-    # Set implicit wait. Default to @default_wait.
+    # Set implicit wait and default_wait to timeout, defaults to 30.
+    # if set_wait is called without a param then the second to last
+    # wait will be used.
     #
     # ```ruby
     # set_wait 2
-    # set_wait # @default_wait
+    # set_wait 3
+    # set_wait # 2
     #
     # ```
     #
     # @param timeout [Integer] the timeout in seconds
     # @return [void]
     def set_wait(timeout = nil)
-      timeout = @default_wait if timeout.nil?
+      if timeout.nil?
+        # Appium::Logger.info "timeout = @default_wait = @last_wait"
+        # Appium::Logger.info "timeout = @default_wait = #{@last_waits}"
+        timeout = @default_wait = @last_waits.first
+      else
+        @default_wait = timeout
+        # Appium::Logger.info "last waits before: #{@last_waits}"
+        @last_waits   = [@last_waits.last, @default_wait]
+        # Appium::Logger.info "last waits after: #{@last_waits}"
+      end
+
       @driver.manage.timeouts.implicit_wait = timeout
     end
 
@@ -775,5 +796,8 @@ end # module Appium
 
 # Paging in Pry is annoying :q required to exit.
 # With pager disabled, the output is similar to IRB
-# Only set if Pry is defined.
-Pry.config.pager = false if defined?(Pry)
+# Only set if Pry is defined and there is no `.pryrc` files.
+if defined?(Pry) && !(File.exist?(Pry::HOME_RC_FILE) || File.exist?(Pry::LOCAL_RC_FILE))
+  Appium::Logger.debug 'Pry.config.pager = false is set.'
+  Pry.config.pager = false
+end
