@@ -463,6 +463,8 @@ module Appium
       attributes
     end
 
+    # Return true if a device name is android
+    # @return [Boolean]
     def device_is_android?
       @appium_device == :android
     end
@@ -470,13 +472,19 @@ module Appium
     # Return true if automationName is 'XCUITest'
     # @return [Boolean]
     def automation_name_is_xcuitest?
-      !@automation_name.nil? && 'xcuitest'.casecmp(@automation_name).zero?
+      is_automation_name_equal_to? 'xcuitest'
     end
 
     # Return true if automationName is 'uiautomator2'
     # @return [Boolean]
     def automation_name_is_uiautomator2?
-      !@automation_name.nil? && 'uiautomator2'.casecmp(@automation_name).zero?
+      is_automation_name_equal_to? 'uiautomator2'
+    end
+
+    # Return true if automationName is 'espresso'
+    # @return [Boolean]
+    def automation_name_is_espresso?
+      is_automation_name_equal_to?('espresso')
     end
 
     # Return true if the target Appium server is over REQUIRED_VERSION_XCUITEST.
@@ -769,6 +777,10 @@ module Appium
     def set_automation_name_if_nil
       return unless @automation_name.nil?
       @automation_name = @driver.capabilities['automationName']
+    end
+
+    def is_automation_name_equal_to?(name)
+      !@automation_name.nil? && name.casecmp(@automation_name).zero?
     end
   end # class Driver
 end # module Appium
