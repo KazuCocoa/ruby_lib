@@ -387,11 +387,15 @@ module Appium
     # @param opts [Object] A hash containing various options.
     # @param global_driver [Bool] A bool require global driver before initialize.
     # @return [Driver]
-    def initialize(opts = {}, global_driver = true)
-      if global_driver
+    def initialize(opts = {}, global_driver = nil)
+      if global_driver.nil?
         warn '[DEPRECATION] Appium::Driver.new(opts) will not generate global driver by default.' \
                  'If you would like to generate the global driver dy default, ' \
                  'please initialise driver with Appium::Driver.new(opts, true)'
+        global_driver = true
+      end
+
+      if global_driver
         $driver.driver_quit if $driver
       end
       raise 'opts must be a hash' unless opts.is_a? Hash
