@@ -13,6 +13,8 @@ module Appium
       #     appium_driver = Appium::Driver.new(opts)
       #     appium_driver.start_driver
       #     appium_element = Appium::Element::Android.on(driver)
+      #
+      #     appium_element = Appium::Element::Android.new(nil) # For debugging
       #     appium_element.elements #=> Available elements formatted by ::REXML::Document
       #
       #     appium_element.filter_actionable #=> Filter `appium_element.elements` with EVAL_ATTRIBUTES
