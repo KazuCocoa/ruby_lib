@@ -55,9 +55,18 @@ module Appium
         }
       end
 
+      # @param [[String]] include: Filter with included ids. They are prior than excluded ones.
+      # @param [[String]] exclude: Exclude with excluded ids.
+      ANDROID_INCLUDE_IDS = []
       ANDROID_EXCLUDE_IDS = %w(android:id/content android:id/navigationBarBackground android:id/parentPanel android:id/topPanel android:id/title_template android:id/contentPanel android:id/scrollView android:id/buttonPanel).freeze
-      def filter_ids(exclude = ANDROID_EXCLUDE_IDS)
-        @elements = @elements.select { |node| !exclude.include? node.attributes['resource-id'] }
+      def filter_ids(exclude: ANDROID_EXCLUDE_IDS, include: ANDROID_INCLUDE_IDS)
+        @elements = @elements.select do |node|
+
+          included = include.include? node.attributes['resource-id']
+          excluded = !exclude.include? node.attributes['resource-id']
+
+          included || excluded
+        end
       end
 
       def rect_of(index)
