@@ -85,7 +85,7 @@ module Appium
         parser.document.reset
         parser.document.filter = class_name
         parser.parse s
-        parser.document.result
+        puts parser.document.result
       else
         s = get_source
         UITestElementsPrinter.new(s).parse(class_name).print

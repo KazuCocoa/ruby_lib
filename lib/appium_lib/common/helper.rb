@@ -100,8 +100,10 @@ module Appium
     #
     def get_page_class
       CountElements.new(@core.device, get_source).parse.format
+    rescue REXML::ParseException => e
+      Appium::Logger.warn("REXML::ParseException: #{e.message}")
+      ''
     end
-
     # Count all classes on screen and print to stdout.
     # Useful for appium_console.
     # @return [nil]
@@ -250,12 +252,18 @@ module Appium
 
     # @private
     def _print_source(source)
-      require 'rexml/formatters/pretty'
+      if source.start_with? '<html'
+        opts = Nokogiri::XML::ParseOptions::NOBLANKS | Nokogiri::XML::ParseOptions::NONET
+        doc = Nokogiri::HTML(source) { |cfg| cfg.options = opts }
+        puts doc.to_xml indent: 2
+      else
+        require 'rexml/formatters/pretty'
 
-      xml = ::REXML::Document.new source
-      formatter = ::REXML::Formatters::Pretty.new 2, false
-      formatter.write(xml, $stdout)
-      puts "\n"
+        xml = ::REXML::Document.new source
+        formatter = ::REXML::Formatters::Pretty.new 2, false
+        formatter.write(xml, $stdout)
+        puts "\n"
+      end
     end
   end
 end
