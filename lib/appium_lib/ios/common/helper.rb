@@ -1,39 +1,58 @@
 module Appium
   module Ios
     # @private
-    class UITestElementsPrinter < Nokogiri::XML::SAX::Document
-      attr_accessor :filter
+    class UITestElementsPrinter
+      require 'rexml/document'
 
-      def start_element(type, attrs = [])
-        return if filter && !filter.eql?(type)
-        page = attrs.inject({}) do |hash, attr|
-          hash[attr[0]] = attr[1] if %w(name label value hint visible).include?(attr[0])
-          hash
+      attr_reader :output
+
+      def initialize(source)
+        @source = source
+        @output = ''
+      end
+
+      def parse(class_name_filter = nil)
+        xml = ::REXML::Document.new @source
+        query = class_name_filter ? "//#{class_name_filter}" : '//*'
+
+        xml.elements.each(query) do |element|
+          attributes = element.attributes
+          _print_attr(element.name,
+                      attributes['name'],
+                      attributes['label'],
+                      attributes['value'],
+                      attributes['hint'],
+                      attributes['visible'])
         end
-        _print_attr(type, page['name'], page['label'], page['value'], page['hint'], page['visible'])
+
+        self
+      end
+
+      def print
+        puts @output
       end
 
       # @private
       def _print_attr(type, name, label, value, hint, visible) # rubocop:disable Metrics/ParameterLists
         if name == label && name == value
-          puts type.to_s if name || label || value || hint || visible
-          puts "   name, label, value: #{name}" if name
+          @output << "#{type}\n" if name || label || value || hint || visible
+          @output << "   name, label, value: #{name}\n" if name
         elsif name == label
-          puts type.to_s if name || label || value || hint || visible
-          puts "   name, label: #{name}" if name
-          puts "   value: #{value}" if value
+          @output << "#{type}\n" if name || label || value || hint || visible
+          @output << "   name, label: #{name}\n" if name
+          @output << "   value: #{value}\n" if value
         elsif name == value
-          puts type.to_s if name || label || value || hint || visible
-          puts "   name, value: #{name}" if name
-          puts "  label: #{label}" if label
+          @output << "#{type}\n" if name || label || value || hint || visible
+          @output << "   name, value: #{name}\n" if name
+          @output << "  label: #{label}\n" if label
         else
-          puts type.to_s if name || label || value || hint || visible
-          puts "   name: #{name}" if name
-          puts "  label: #{label}" if label
-          puts "  value: #{value}" if value
+          @output << "#{type}\n" if name || label || value || hint || visible
+          @output << "   name: #{name}\n" if name
+          @output << "  label: #{label}\n" if label
+          @output << "  value: #{value}\n" if value
         end
-        puts "   hint: #{hint}" if hint
-        puts "   visible: #{visible}" if visible
+        @output << "   hint: #{hint}\n" if hint
+        @output << "   visible: #{visible}\n" if visible
       end
     end
     # iOS only. On Android uiautomator always returns an empty string for EditText password.
@@ -49,8 +68,7 @@ module Appium
     #
     # @example
     #     ```ruby
-    #     page class: :UIAButton # filter on buttons
-    #     page class: :UIAButton, window: 1
+    #     page class: 'XCUIElementTypeWindow ' # filter on XCUIElementTypeWindow
     #     ```
     #
     # @option visible [Symbol] visible value to filter on
@@ -70,11 +88,7 @@ module Appium
         parser.document.result
       else
         s = get_source
-        parser = Nokogiri::XML::SAX::Parser.new(UITestElementsPrinter.new)
-        if class_name
-          parser.document.filter = class_name.is_a?(Symbol) ? class_name.to_s : class_name
-        end
-        parser.parse s
+        UITestElementsPrinter.new(s).parse(class_name).print
         nil
       end
     end
